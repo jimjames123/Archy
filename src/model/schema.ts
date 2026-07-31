@@ -100,6 +100,12 @@ export const Beam = z.object({
   type: z.literal("beam"),
   /** Line the beam runs along, mm. */
   line: z.tuple([Point, Point]),
+  /**
+   * Structural depth of the member, mm — how far its soffit hangs below the
+   * ceiling. This is what couples structure to habitability: a deep beam added
+   * to fix a load path can eat the headroom of the room beneath it.
+   */
+  depth: z.number().positive(),
 });
 export type Beam = z.infer<typeof Beam>;
 

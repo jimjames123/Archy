@@ -57,3 +57,48 @@ export function collinearOverlapLength(a: Segment, b: Segment, tol = 150): numbe
   const hi = Math.min(aSpan[1], bProj[1]);
   return Math.max(0, hi - lo);
 }
+
+/** True if point p is inside the polygon (ray casting, even-odd rule). */
+export function pointInPolygon(p: Point, polygon: readonly Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i]!;
+    const b = polygon[j]!;
+    const intersects =
+      a[1] > p[1] !== b[1] > p[1] &&
+      p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0];
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function ccw(a: Point, b: Point, c: Point): number {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+}
+
+/** True if the two segments properly cross (shared-endpoint-tolerant). */
+export function segmentsIntersect(s1: Segment, s2: Segment): boolean {
+  const [a, b] = s1;
+  const [c, d] = s2;
+  const d1 = ccw(c, d, a);
+  const d2 = ccw(c, d, b);
+  const d3 = ccw(a, b, c);
+  const d4 = ccw(a, b, d);
+  return d1 * d2 < 0 && d3 * d4 < 0;
+}
+
+/**
+ * True if a segment passes through a polygon: either endpoint inside, or the
+ * segment crosses any polygon edge. Used to decide whether a beam runs over a
+ * given room.
+ */
+export function segmentIntersectsPolygon(
+  seg: Segment,
+  polygon: readonly Point[],
+): boolean {
+  if (pointInPolygon(seg[0], polygon) || pointInPolygon(seg[1], polygon)) return true;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    if (segmentsIntersect(seg, [polygon[j]!, polygon[i]!])) return true;
+  }
+  return false;
+}

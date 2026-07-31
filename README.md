@@ -20,7 +20,15 @@ Coordination checks proven so far:
 | `load-path.opening-span` | Structural | An opening in a load-bearing wall exceeds the assumed lintel span with no beam modelled |
 | `load-path.support-beneath` | Structural | An upper-storey load-bearing wall has no wall/beam beneath it (e.g. the wall downstairs was removed) |
 | `egress.habitable-door` | Architectural | A habitable space has no adequate door out, reasoning over the `bounds`/`hostedBy` graph edges |
+| `headroom.clear-height` | Architectural ← Structural | A storey is too short, or a **beam's depth** eats the clear height of a habitable room beneath it |
 | `door-clearance.min-width` | Architectural | A door is narrower than the configured minimum |
+
+The `headroom` rule is the one that most clearly earns the shared model: it
+couples a *structural* property (a beam's depth) to an *architectural*
+requirement (clear ceiling height), so the beam a user adds to resolve a
+load-path conflict can automatically surface a headroom conflict beneath it —
+the fix for one discipline exposing a cost in another. `headroom.test.ts`
+proves that exact cascade end to end.
 
 ```
 src/
@@ -29,15 +37,17 @@ src/
     graph.ts       BuildingModel: typed element graph, transactions, edit log
     fixtures.ts    Hand-authored one- and two-storey plans for tests/demos
   geometry/
-    segments.ts    Tiny 2D segment helpers (collinear overlap) for structural rules
+    segments.ts    2D helpers: collinear overlap, point-in-polygon, seg/poly cross
   rules/
     engine.ts        RulesEngine: runs only the rules whose deps changed
     loadPath.ts      Structural: opening span in a load-bearing wall
     supportBeneath.ts  Structural: multi-storey support / removed load path
+    headroom.ts        Architectural←Structural: beam depth vs clear ceiling height
     doorClearance.ts   Architectural: minimum door width
     egress.ts          Architectural: habitable space needs a door out
     loadPath.test.ts   Phase 0 acceptance test
     phase3.test.ts     Phase 3 rules + deletion-dispatch test
+    headroom.test.ts   Headroom rule + the cross-discipline cascade
 ```
 
 ### A gap Phase 3 closed

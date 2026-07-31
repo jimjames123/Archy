@@ -66,6 +66,7 @@ describe("load-path coordination", () => {
             [1000, 0],
             [4000, 0],
           ],
+          depth: 250,
         },
       },
       { op: "addEdge", edge: { kind: "supports", beam: "beam-1", carries: ids.wallS } },

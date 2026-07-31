@@ -65,6 +65,7 @@ describe("support-beneath (multi-storey load path)", () => {
             [0, 0],
             [6000, 0],
           ],
+          depth: 250,
         },
       },
     ]);
