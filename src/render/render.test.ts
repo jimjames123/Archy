@@ -7,6 +7,7 @@ import { headroomRule } from "../rules/headroom.js";
 import { renderPlanSVG } from "./plan2d.js";
 import { renderIsoSVG } from "./iso.js";
 import { renderReportHTML } from "./report.js";
+import { fitViewport } from "./viewport.js";
 
 function scenario() {
   const { model, ids } = makeRoomPlan();
@@ -68,6 +69,24 @@ describe("iso renderer", () => {
     const svg = renderIsoSVG(model, issues);
     expect(svg.startsWith("<svg")).toBe(true);
     expect(svg).toContain("<polygon"); // extruded wall faces
+  });
+});
+
+describe("viewport", () => {
+  it("toModel inverts toScreen (needed for dragging)", () => {
+    const vp = fitViewport([
+      [0, 0],
+      [5000, 4000],
+    ]);
+    for (const p of [
+      [0, 0],
+      [2500, 2000],
+      [5000, 4000],
+    ] as [number, number][]) {
+      const back = vp.toModel(vp.toScreen(p));
+      expect(back[0]).toBeCloseTo(p[0], 6);
+      expect(back[1]).toBeCloseTo(p[1], 6);
+    }
   });
 });
 

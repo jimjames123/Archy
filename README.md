@@ -84,6 +84,31 @@ and an egress conflict at once, and renders all three across both views. The
 real-time editor will swap the isometric SVG for three.js, but the contract —
 every view is derived from the one model — is already the whole point.
 
+## Live editor (Phase 2)
+
+`web/` is a real browser editor. The entire coordination stack — `BuildingModel`,
+transactions, `RulesEngine`, and all five rules — is imported **unchanged** from
+`src/` and runs client-side; dragging geometry commits a transaction, re-runs the
+engine, and repaints conflicts on the same frame. This is the payoff of the
+Phase 0 "TypeScript everywhere" decision: one model, running in the browser.
+
+```bash
+npm run web:dev     # esbuild dev server at http://localhost:8000
+# or:
+npm run web:build   # bundle to web/dist/bundle.js, then serve web/ statically
+```
+
+Interactions: drag a corner (○) to reshape the room (coincident wall + space
+vertices move together so it stays watertight); drag a window edge (▫) to widen
+the opening; click a wall to select it and toggle its load-bearing state; add a
+transfer beam. The panel and the header conflict count update on every edit —
+widen the window past the lintel span and the structural conflict appears live;
+add a deep beam and the headroom conflict cascades in beneath it.
+
+`node scripts/shoot.mjs` drives the built app in headless Chromium (real pointer
+drags) and captures before/after screenshots — a regression check that the live
+loop works, not just the rules in isolation.
+
 ## Key architecture decisions
 
 - **One lean parametric graph is the source of truth — not IFC.** IFC is an

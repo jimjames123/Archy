@@ -9,6 +9,8 @@ export interface Viewport {
   height: number;
   scale: number;
   toScreen(p: Point): Point;
+  /** Inverse of toScreen — screen px back to model mm. Needed for dragging. */
+  toModel(p: Point): Point;
 }
 
 export function bbox(points: Point[]) {
@@ -39,6 +41,10 @@ export function fitViewport(points: Point[], targetWidth = 900, margin = 56): Vi
     toScreen: ([x, y]) => [
       (x - minX) * scale + margin,
       (maxY - y) * scale + margin, // flip y
+    ],
+    toModel: ([sx, sy]) => [
+      (sx - margin) / scale + minX,
+      maxY - (sy - margin) / scale, // un-flip y
     ],
   };
 }
