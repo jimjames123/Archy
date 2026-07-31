@@ -8,12 +8,15 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "demo": "tsx src/demo/generate.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }

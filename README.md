@@ -45,9 +45,14 @@ src/
     headroom.ts        Architectural←Structural: beam depth vs clear ceiling height
     doorClearance.ts   Architectural: minimum door width
     egress.ts          Architectural: habitable space needs a door out
-    loadPath.test.ts   Phase 0 acceptance test
-    phase3.test.ts     Phase 3 rules + deletion-dispatch test
-    headroom.test.ts   Headroom rule + the cross-discipline cascade
+    *.test.ts          Acceptance tests (25 total)
+  render/
+    viewport.ts    Model→screen fitting (mm, y-up → px, y-down)
+    plan2d.ts      2D plan SVG with conflicts drawn onto the drawing + legend
+    iso.ts         Isometric 3D view: walls extruded from the same model
+    report.ts      Self-contained HTML: both views + the issue list
+  demo/
+    generate.ts    Worked example → demo/plan.svg, iso.svg, report.html
 ```
 
 ### A gap Phase 3 closed
@@ -64,8 +69,20 @@ Run it:
 ```bash
 npm install
 npm run typecheck
-npm test
+npm test        # 25 tests
+npm run demo    # writes demo/report.html — open it in a browser
 ```
+
+## Visualization (Phase 1)
+
+The renderers are pure functions of the model — no browser, no external deps —
+so the same model drives both a 2D plan and a 3D view, and the engine's
+conflicts are drawn **onto** the plan (red overlays + numbered badges matching a
+legend) rather than shown in a separate list. `npm run demo` builds one plan
+carrying a structural load-path conflict, an architectural headroom conflict,
+and an egress conflict at once, and renders all three across both views. The
+real-time editor will swap the isometric SVG for three.js, but the contract —
+every view is derived from the one model — is already the whole point.
 
 ## Key architecture decisions
 
