@@ -20,6 +20,7 @@ export function makeRoomPlan() {
     wallE: "wall-east",
     wallW: "wall-west",
     window: "opening-window-1",
+    door: "opening-door-1",
     room: "space-room-1",
   };
 
@@ -78,6 +79,22 @@ export function makeRoomPlan() {
     {
       op: "addElement",
       element: {
+        type: "opening",
+        id: ids.door,
+        storeyId,
+        provenance: user,
+        version: 0,
+        kind: "door",
+        hostWallId: ids.wallW,
+        offset: 2000,
+        width: 900,
+        height: 2100,
+        sillHeight: 0,
+      },
+    },
+    {
+      op: "addElement",
+      element: {
         type: "space",
         id: ids.room,
         storeyId,
@@ -93,7 +110,76 @@ export function makeRoomPlan() {
       },
     },
     { op: "addEdge", edge: { kind: "hostedBy", opening: ids.window, wall: ids.wallS } },
+    { op: "addEdge", edge: { kind: "hostedBy", opening: ids.door, wall: ids.wallW } },
     { op: "addEdge", edge: { kind: "bounds", wall: ids.wallS, space: ids.room } },
+    { op: "addEdge", edge: { kind: "bounds", wall: ids.wallN, space: ids.room } },
+    { op: "addEdge", edge: { kind: "bounds", wall: ids.wallE, space: ids.room } },
+    { op: "addEdge", edge: { kind: "bounds", wall: ids.wallW, space: ids.room } },
+  ]);
+
+  return { model, ids };
+}
+
+/**
+ * A two-storey shell: four load-bearing walls on the ground floor with four
+ * more stacked directly above on the first floor. Used to test the
+ * support-beneath rule — knocking out a ground-floor wall should flag the wall
+ * above it as unsupported.
+ */
+export function makeTwoStoreyPlan() {
+  const model = new BuildingModel();
+  const rect = [
+    ["S", [0, 0], [6000, 0]],
+    ["N", [0, 4000], [6000, 4000]],
+    ["W", [0, 0], [0, 4000]],
+    ["E", [6000, 0], [6000, 4000]],
+  ] as const;
+
+  const ids = {
+    storey0: "storey-0",
+    storey1: "storey-1",
+    ground: { S: "g-S", N: "g-N", W: "g-W", E: "g-E" },
+    first: { S: "f-S", N: "f-N", W: "f-W", E: "f-E" },
+  };
+
+  const storey = (id: string, level: number, elevation: number) => ({
+    op: "addElement" as const,
+    element: {
+      type: "storey" as const,
+      id,
+      storeyId: id,
+      provenance: user,
+      version: 0,
+      level,
+      elevation,
+      height: 2700,
+    },
+  });
+
+  const wall = (id: string, storeyId: string, a: readonly number[], b: readonly number[]) => ({
+    op: "addElement" as const,
+    element: {
+      type: "wall" as const,
+      id,
+      storeyId,
+      provenance: user,
+      version: 0,
+      baseline: [
+        [a[0]!, a[1]!],
+        [b[0]!, b[1]!],
+      ] as [[number, number], [number, number]],
+      thickness: 200,
+      height: 2700,
+      isLoadBearing: true,
+      material: "brick",
+    },
+  });
+
+  model.commit([
+    storey(ids.storey0, 0, 0),
+    storey(ids.storey1, 1, 2700),
+    ...rect.map(([tag, a, b]) => wall(ids.ground[tag], ids.storey0, a, b)),
+    ...rect.map(([tag, a, b]) => wall(ids.first[tag], ids.storey1, a, b)),
   ]);
 
   return { model, ids };

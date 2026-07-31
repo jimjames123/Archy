@@ -49,28 +49,20 @@ export class RulesEngine {
   }
 
   /**
-   * Run only the rules whose `dependsOn` intersects the types present in the
-   * changed set. Called on every commit.
+   * Run only the rules whose `dependsOn` intersects the types touched by a
+   * commit. Called on every commit; pass the `CommitResult` straight through.
+   *
+   * `changedTypes` comes from the commit (not re-derived from the model) so
+   * that a REMOVED element still triggers the rules that depended on its type —
+   * the element is gone from the model by the time we get here.
    */
-  evaluateChanged(model: BuildingModel, changed: Set<Id>): Issue[] {
-    const changedTypes = typesOf(model, changed);
+  evaluateChanged(
+    model: BuildingModel,
+    changed: Set<Id>,
+    changedTypes: Set<ElementType>,
+  ): Issue[] {
     return this.rules
       .filter((r) => r.dependsOn.some((t) => changedTypes.has(t)))
       .flatMap((r) => r.evaluate(model, changed));
   }
-}
-
-/**
- * Types present in the changed set. A removed element is no longer in the
- * model, so we fall back to scanning edges/refs is unnecessary here: removal
- * cascades already re-mark neighbouring elements as changed (see graph.commit),
- * and those neighbours carry the types the affected rules depend on.
- */
-function typesOf(model: BuildingModel, changed: Set<Id>): Set<ElementType> {
-  const types = new Set<ElementType>();
-  for (const id of changed) {
-    const el = model.getElement(id);
-    if (el) types.add(el.type);
-  }
-  return types;
 }

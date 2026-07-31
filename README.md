@@ -6,32 +6,48 @@ renders. A shared, editable building model sits at the centre; every discipline
 module reads from and writes back to it, so an edit in one discipline is
 automatically re-validated against the others instead of silently going stale.
 
-## Status: Phase 0 — the model + coordination spine
+## Status: model + coordination spine, with a thickened rule set
 
-This repository currently contains the **spine** the whole product hangs off,
-plus the first cross-discipline conflict check proven end to end:
+This repository contains the **spine** the whole product hangs off, plus four
+cross-discipline / geometric conflict checks proven end to end. The core loop —
+edit → incremental re-validation → conflict → resolve — is the thesis;
+everything before it is scaffolding, everything after it is expansion.
 
-> An architectural edit (widen a window) is automatically re-validated by a
-> **structural** load-path rule through the shared model, surfaces a
-> cross-discipline conflict, and clears when the user resolves it (add a beam,
-> or narrow the opening).
+Coordination checks proven so far:
 
-That loop — edit → incremental re-validation → cross-discipline conflict — is
-the core thesis. Everything before it is scaffolding; everything after it is
-expansion.
+| Rule | Discipline | Fires when |
+| --- | --- | --- |
+| `load-path.opening-span` | Structural | An opening in a load-bearing wall exceeds the assumed lintel span with no beam modelled |
+| `load-path.support-beneath` | Structural | An upper-storey load-bearing wall has no wall/beam beneath it (e.g. the wall downstairs was removed) |
+| `egress.habitable-door` | Architectural | A habitable space has no adequate door out, reasoning over the `bounds`/`hostedBy` graph edges |
+| `door-clearance.min-width` | Architectural | A door is narrower than the configured minimum |
 
 ```
 src/
   model/
     schema.ts      Zod schema for the shared building model (one source of truth)
     graph.ts       BuildingModel: typed element graph, transactions, edit log
-    fixtures.ts    A hand-authored room plan for tests/demos
+    fixtures.ts    Hand-authored one- and two-storey plans for tests/demos
+  geometry/
+    segments.ts    Tiny 2D segment helpers (collinear overlap) for structural rules
   rules/
-    engine.ts      RulesEngine: runs only the rules whose deps changed
-    loadPath.ts    Structural load-path rule (Architectural ↔ Structural)
-    doorClearance.ts  A second, architectural rule (proves dispatch)
-    loadPath.test.ts  Phase 0 acceptance test
+    engine.ts        RulesEngine: runs only the rules whose deps changed
+    loadPath.ts      Structural: opening span in a load-bearing wall
+    supportBeneath.ts  Structural: multi-storey support / removed load path
+    doorClearance.ts   Architectural: minimum door width
+    egress.ts          Architectural: habitable space needs a door out
+    loadPath.test.ts   Phase 0 acceptance test
+    phase3.test.ts     Phase 3 rules + deletion-dispatch test
 ```
+
+### A gap Phase 3 closed
+
+Deleting an element used to leave the engine blind: the removed element's type
+vanished from the model, so rules that depended on it wouldn't re-run (you could
+delete a load-bearing wall and nothing would re-check what it held up). `commit`
+now returns `changedTypes` — the types touched, **including removed elements'
+types captured at mutation time** — and the engine dispatches on that. Knocking
+out a wall now correctly re-runs the structural rules.
 
 Run it:
 
@@ -73,12 +89,12 @@ assistance — never a substitute for a licensed engineer's stamped drawings.
 
 ## Roadmap
 
-- **Phase 0 — model + coordination spine** ✅ (this commit)
+- **Phase 0 — model + coordination spine** ✅
+- **Phase 3 — coordination layer, thickened** ✅ second structural rule
+  (multi-storey support) + geometric egress rule + deletion-aware dispatch.
 - **Phase 1 — visualization from the model:** 2D plan + 3D extrusion, both
-  reading the shared model.
+  reading the shared model, with conflict issues surfaced on the drawing.
 - **Phase 2 — interactive editing:** edits write back through transactions.
-- **Phase 3 — coordination layer, expanded:** more Architectural ↔ Structural
-  rules + a geometric egress/clearance check firing live on every edit.
 - **Phase 4 — generation:** LLM text/sketch → parametric model (constrained to
   the schema), plus land-dims → footprint/orientation proposer.
 - **Phase 5+ —** electrical & plumbing modules and rules; region rulesets;

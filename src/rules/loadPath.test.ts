@@ -30,11 +30,11 @@ describe("load-path coordination", () => {
     const { model, ids } = makeRoomPlan();
 
     // Architectural edit: widen the window from 900 mm to 2400 mm.
-    const { changed } = model.commit([
+    const { changed, changedTypes } = model.commit([
       { op: "updateElement", id: ids.window, patch: { width: 2400 } as never },
     ]);
 
-    const issues = engine().evaluateChanged(model, changed);
+    const issues = engine().evaluateChanged(model, changed, changedTypes);
     const conflict = issues.find(
       (i) => i.ruleId === "structural.load-path.opening-span",
     );
@@ -53,7 +53,7 @@ describe("load-path coordination", () => {
     ]);
 
     // Structural fix: add a beam and record that it carries the host wall.
-    const { changed } = model.commit([
+    const { changed, changedTypes } = model.commit([
       {
         op: "addElement",
         element: {
@@ -71,7 +71,7 @@ describe("load-path coordination", () => {
       { op: "addEdge", edge: { kind: "supports", beam: "beam-1", carries: ids.wallS } },
     ]);
 
-    const issues = engine().evaluateChanged(model, changed);
+    const issues = engine().evaluateChanged(model, changed, changedTypes);
     expect(
       issues.filter((i) => i.ruleId === "structural.load-path.opening-span"),
     ).toEqual([]);
@@ -82,10 +82,10 @@ describe("load-path coordination", () => {
     model.commit([
       { op: "updateElement", id: ids.window, patch: { width: 2400 } as never },
     ]);
-    const { changed } = model.commit([
+    const { changed, changedTypes } = model.commit([
       { op: "updateElement", id: ids.window, patch: { width: 1500 } as never },
     ]);
-    expect(engine().evaluateChanged(model, changed)).toEqual([]);
+    expect(engine().evaluateChanged(model, changed, changedTypes)).toEqual([]);
   });
 
   it("does not mark a load-bearing wall's opening broken when the wall is non-structural", () => {
@@ -110,10 +110,10 @@ describe("incremental engine dispatch", () => {
     ]);
 
     // A Space-only edit must NOT re-run the structural (opening/wall/beam) rule.
-    const { changed } = model.commit([
+    const { changed, changedTypes } = model.commit([
       { op: "updateElement", id: ids.room, patch: { program: "kitchen" } as never },
     ]);
-    const issues = engine().evaluateChanged(model, changed);
+    const issues = engine().evaluateChanged(model, changed, changedTypes);
     expect(issues).toEqual([]);
 
     // A full pass, by contrast, still sees the latent conflict.
