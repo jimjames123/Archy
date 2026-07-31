@@ -17,10 +17,13 @@
   button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid #cfd8e0; background: #fff; border-radius: 8px; cursor: pointer; }
   button:hover { background: #f4f6f8; }
   button:disabled { opacity: .45; cursor: default; }
-  main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px 20px; align-items: start; }
-  @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
-  .canvas { background: #fff; border: 1px solid #e3e8ee; border-radius: 12px; padding: 8px; overflow: auto; }
-  .canvas svg { display: block; touch-action: none; }
+  main { display: grid; grid-template-columns: 1fr 300px; gap: 16px; padding: 16px 20px; align-items: start; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .views { display: flex; gap: 16px; flex-wrap: wrap; }
+  .card { background: #fff; border: 1px solid #e3e8ee; border-radius: 12px; padding: 10px; flex: 1 1 460px; overflow: auto; }
+  .card .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #6b7b8a; margin: 2px 4px 8px; }
+  #canvas svg { display: block; touch-action: none; }        /* interactive: 1:1, no CSS scaling */
+  #view3d svg { display: block; width: 100%; height: auto; }  /* view-only: scale to fit */
   .panel { background: #fff; border: 1px solid #e3e8ee; border-radius: 12px; padding: 14px 16px; }
   .panel h2 { font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: #6b7b8a; }
   .hint { font-size: 12px; color: #8a97a3; margin: 0 0 12px; }
@@ -44,7 +47,10 @@
     </div>
   </header>
   <main>
-    <div class="canvas" id="canvas"></div>
+    <div class="views">
+      <div class="card"><div class="label">Plan — editable</div><div id="canvas"></div></div>
+      <div class="card"><div class="label">3D massing — live</div><div id="view3d"></div></div>
+    </div>
     <aside class="panel">
       <h2>Coordination</h2>
       <p class="hint">Drag a corner (○) to reshape the room, or a window edge (▫) to widen the opening. Click a wall to select it. Everything re-validates on every edit.</p>

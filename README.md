@@ -98,6 +98,11 @@ npm run web:dev     # esbuild dev server at http://localhost:8000
 npm run web:build   # bundle to web/dist/bundle.js, then serve web/ statically
 ```
 
+The editor shows the **2D plan and the 3D massing side by side, both driven by
+the same model** — the isometric renderer from `src/render/iso.ts` re-runs on
+every edit, so a conflict (e.g. a widened opening in a load-bearing wall) tints
+that wall red in both views at once.
+
 Interactions: drag a corner (○) to reshape the room (coincident wall + space
 vertices move together so it stays watertight); drag a window edge (▫) to widen
 the opening; click a wall to select it and toggle its load-bearing state; add a

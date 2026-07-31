@@ -29,7 +29,7 @@ const port = server.address().port;
 const url = `http://localhost:${port}/index.html`;
 
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
-const page = await browser.newPage({ viewport: { width: 1180, height: 760 }, deviceScaleFactor: 2 });
+const page = await browser.newPage({ viewport: { width: 1480, height: 820 }, deviceScaleFactor: 2 });
 await page.goto(url, { waitUntil: "networkidle" });
 await page.waitForFunction(() => document.querySelectorAll("#canvas svg line").length > 0);
 

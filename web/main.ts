@@ -17,6 +17,7 @@ import { egressRule } from "../src/rules/egress.js";
 import { doorClearanceRule } from "../src/rules/doorClearance.js";
 import { fitViewport, type Viewport } from "../src/render/viewport.js";
 import { SEVERITY_COLOR } from "../src/render/svg.js";
+import { renderIsoSVG } from "../src/render/iso.js";
 import type { Point } from "../src/model/schema.js";
 
 const engine = new RulesEngine()
@@ -78,7 +79,7 @@ class Editor {
       [Math.min(...xs) - pad, Math.min(...ys) - pad],
       [Math.max(...xs) + pad, Math.max(...ys) + pad],
     ];
-    this.vp = fitViewport(padded, 760);
+    this.vp = fitViewport(padded, 520);
     this.svg.setAttribute("width", String(this.vp.width));
     this.svg.setAttribute("height", String(this.vp.height));
   }
@@ -93,7 +94,14 @@ class Editor {
   private revalidate() {
     this.issues = engine.evaluateAll(this.model);
     this.render();
+    this.render3d();
     renderPanel(this.issues);
+  }
+
+  /** The 3D view is the same iso renderer from src/, fed the same model. */
+  private render3d() {
+    const host = document.getElementById("view3d");
+    if (host) host.innerHTML = renderIsoSVG(this.model, this.issues, { width: 520 });
   }
 
   // ---- interaction -------------------------------------------------------
