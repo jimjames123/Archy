@@ -34,27 +34,33 @@ export function renderReportHTML(
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${esc(title)}</title>
 <style>
-  :root { color-scheme: light dark; }
-  body { margin:0; font-family: ui-sans-serif, system-ui, sans-serif; background:#f4f6f8; color:#1e2a36; }
-  header { padding:20px 24px; }
-  h1 { font-size:18px; margin:0 0 2px; }
-  .sub { color:#6b7b8a; font-size:13px; }
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:0 24px; }
+  :root {
+    --paper:#f4f1ea; --card:#fffefb; --ink:#1b1a17; --ink-2:#57544d; --ink-3:#8b877c;
+    --line:#e7e3d8; --accent:#b0542f; --ok:#3e7d52;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  header { padding:24px 28px 8px; }
+  h1 { font-family:var(--serif); font-weight:500; font-size:24px; letter-spacing:-.01em; margin:0 0 4px; }
+  .sub { color:var(--ink-3); font-size:13px; font-family:var(--mono); letter-spacing:.02em; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; padding:16px 28px 0; }
   @media (max-width: 820px) { .grid { grid-template-columns:1fr; } }
-  .card { background:#fff; border:1px solid #e3e8ee; border-radius:12px; padding:8px; overflow-x:auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px; overflow-x:auto; box-shadow:0 1px 2px rgba(27,26,23,.03); }
   .card svg { width:100%; height:auto; display:block; }
-  .issues { padding:16px 24px 32px; }
+  .issues { padding:18px 28px 8px; }
   ul { list-style:none; margin:0; padding:0; }
-  li { display:flex; gap:10px; align-items:baseline; padding:8px 10px; border-bottom:1px solid #eef2f6; font-size:13px; }
+  li { display:flex; gap:11px; align-items:baseline; padding:10px 6px; border-bottom:1px solid var(--line); font-size:13px; line-height:1.45; }
+  li:last-child { border-bottom:none; }
   .badge { color:#fff; min-width:20px; height:20px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
   .disc { font-weight:600; text-transform:capitalize; }
-  .sev { text-transform:uppercase; font-size:11px; font-weight:700; letter-spacing:.03em; }
-  .msg { color:#42525f; }
-  .note { padding:0 24px 24px; color:#8a97a3; font-size:12px; max-width:70ch; }
+  .sev { text-transform:uppercase; font-size:11px; font-weight:700; letter-spacing:.04em; font-family:var(--mono); }
+  .msg { color:var(--ink-2); }
+  .note { padding:8px 28px 28px; color:var(--ink-3); font-size:11px; line-height:1.5; max-width:74ch; }
 </style></head>
 <body>
   <header><h1>${esc(title)}</h1>
-    <div class="sub">${conflicts} conflict(s), ${issues.length} issue(s) total — one shared model, two views.</div>
+    <div class="sub">${conflicts} conflict(s) · ${issues.length} issue(s) total — one shared model, two views.</div>
   </header>
   <div class="grid">
     <div class="card">${plan}</div>

@@ -52,18 +52,18 @@ export function renderPlanSVG(
   // running through the centre never lands on top of it.
   for (const s of spaces) {
     const poly = s.boundary.map((p) => vp.toScreen(p));
-    layers.push(polygon(poly, `fill="#eef2f6" stroke="none"`));
+    layers.push(polygon(poly, `fill="#efeadd" stroke="none"`));
     const ys = poly.map((p) => p[1]);
     const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length;
     const labelY = Math.min(...ys) + 0.28 * (Math.max(...ys) - Math.min(...ys));
     layers.push(
-      text([cx, labelY], s.program, `fill="#5b6b7a" font-size="13" text-anchor="middle"`),
+      text([cx, labelY], s.program, `fill="#57544d" font-size="13" text-anchor="middle"`),
     );
     layers.push(
       text(
         [cx, labelY + 16],
         `${(areaOf(s.boundary) / 1e6).toFixed(1)} m²`,
-        `fill="#94a3b0" font-size="11" text-anchor="middle"`,
+        `fill="#8b877c" font-size="11" text-anchor="middle"`,
       ),
     );
   }
@@ -73,7 +73,7 @@ export function renderPlanSVG(
     const a = vp.toScreen(w.baseline[0]);
     const b = vp.toScreen(w.baseline[1]);
     const px = Math.max(2, w.thickness * vp.scale);
-    const color = w.isLoadBearing ? "#2b3a4a" : "#9aa7b4";
+    const color = w.isLoadBearing ? "#23211c" : "#b3ab99";
     layers.push(line(a, b, `stroke="${color}" stroke-width="${px}" stroke-linecap="round"`));
   }
 
@@ -92,14 +92,14 @@ export function renderPlanSVG(
     const end: Point = [a[0] + u[0] * (cOff + halfW), a[1] + u[1] * (cOff + halfW)];
     const px = Math.max(2, wall.thickness * vp.scale);
     // Cut the wall.
-    layers.push(line(start, end, `stroke="#ffffff" stroke-width="${px + 1}"`));
+    layers.push(line(start, end, `stroke="#fffefb" stroke-width="${px + 1}"`));
     if (o.kind === "door") {
       const w2 = o.width * vp.scale;
       const tip: Point = [start[0] + n[0] * w2, start[1] + n[1] * w2];
       const closed: Point = [start[0] + u[0] * w2, start[1] + u[1] * w2];
-      layers.push(line(start, tip, `stroke="#e08a1e" stroke-width="1.5"`));
+      layers.push(line(start, tip, `stroke="#c2761e" stroke-width="1.5"`));
       layers.push(
-        `<path d="M ${closed[0].toFixed(1)} ${closed[1].toFixed(1)} A ${w2.toFixed(1)} ${w2.toFixed(1)} 0 0 ${sweep(u, n)} ${tip[0].toFixed(1)} ${tip[1].toFixed(1)}" fill="none" stroke="#e08a1e" stroke-width="1" stroke-dasharray="3 3"/>`,
+        `<path d="M ${closed[0].toFixed(1)} ${closed[1].toFixed(1)} A ${w2.toFixed(1)} ${w2.toFixed(1)} 0 0 ${sweep(u, n)} ${tip[0].toFixed(1)} ${tip[1].toFixed(1)}" fill="none" stroke="#c2761e" stroke-width="1" stroke-dasharray="3 3"/>`,
       );
     } else {
       layers.push(line(start, end, `stroke="#2ca6c4" stroke-width="3"`));
@@ -159,9 +159,9 @@ export function renderPlanSVG(
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${totalH}" viewBox="0 0 ${width} ${totalH}" font-family="ui-sans-serif, system-ui, sans-serif">`,
-    `<rect width="${width}" height="${totalH}" fill="#ffffff"/>`,
+    `<rect width="${width}" height="${totalH}" fill="#fffefb"/>`,
     opts.title
-      ? text([24, 30], opts.title, `fill="#1e2a36" font-size="16" font-weight="700"`)
+      ? text([24, 30], opts.title, `fill="#1b1a17" font-size="16" font-weight="700"`)
       : "",
     ...layers,
     ...badges,
@@ -182,14 +182,14 @@ function renderLegend(
   if (numbered.length === 0) {
     return {
       height: 40,
-      svg: text([24, top + 24], "No conflicts detected.", `fill="#3f8f5b" font-size="13"`),
+      svg: text([24, top + 24], "No conflicts detected.", `fill="#3e7d52" font-size="13"`),
     };
   }
   const rowH = 24;
   const height = numbered.length * rowH + 36;
   const rows: string[] = [
-    line([0, top], [width, top], `stroke="#e3e8ee" stroke-width="1"`),
-    text([24, top + 22], `${numbered.length} issue(s)`, `fill="#1e2a36" font-size="13" font-weight="700"`),
+    line([0, top], [width, top], `stroke="#e7e3d8" stroke-width="1"`),
+    text([24, top + 22], `${numbered.length} issue(s)`, `fill="#1b1a17" font-size="13" font-weight="700"`),
   ];
   numbered.forEach(({ n, issue }, i) => {
     const y = top + 40 + i * rowH;
@@ -197,7 +197,7 @@ function renderLegend(
     rows.push(circle([32, y - 4], 9, `fill="${col}"`));
     rows.push(text([32, y], String(n), `fill="#fff" font-size="11" font-weight="700" text-anchor="middle"`));
     rows.push(
-      text([52, y], truncate(`[${issue.discipline}] ${issue.message}`, 120), `fill="#42525f" font-size="12"`),
+      text([52, y], truncate(`[${issue.discipline}] ${issue.message}`, 120), `fill="#57544d" font-size="12"`),
     );
   });
   return { svg: rows.join("\n"), height };

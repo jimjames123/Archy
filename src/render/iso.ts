@@ -68,7 +68,7 @@ export function renderIsoSVG(
     layers.push(
       polygon(
         s.boundary.map((b) => toScreen([b[0], b[1], 0])),
-        `fill="#e7edf3" stroke="#c7d2dd" stroke-width="1"`,
+        `fill="#efeadd" stroke="#d8d3c5" stroke-width="1"`,
       ),
     );
   }
@@ -90,13 +90,13 @@ export function renderIsoSVG(
       ? SEVERITY_COLOR.conflict
       : w.isLoadBearing
         ? alongX
-          ? "#5b6f84"
-          : "#47586a"
+          ? "#4a4640"
+          : "#37342e"
         : alongX
-          ? "#aab6c2"
-          : "#96a3b0";
+          ? "#a89f8d"
+          : "#948b7b";
     layers.push(
-      polygon(quad, `fill="${fill}" fill-opacity="${conflicted(w.id) ? 0.55 : 0.95}" stroke="#33414f" stroke-width="1" stroke-linejoin="round"`),
+      polygon(quad, `fill="${fill}" fill-opacity="${conflicted(w.id) ? 0.55 : 0.96}" stroke="#2b2823" stroke-width="1" stroke-linejoin="round"`),
     );
   }
 

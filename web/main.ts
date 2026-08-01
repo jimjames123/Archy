@@ -43,6 +43,18 @@ type CornerRef =
 const SVGNS = "http://www.w3.org/2000/svg";
 const EPS = 5; // mm tolerance for "same corner"
 
+/** Drawing palette, aligned with the Datum design system in index.html. */
+const C = {
+  room: "#efeadd", // warm floor fill
+  gap: "#fffefb", // opening cut / handle fill (matches card)
+  wall: "#23211c", // load-bearing wall (ink)
+  wallLight: "#b3ab99", // non-load-bearing (warm grey)
+  door: "#c2761e", // ochre
+  window: "#2ca6c4", // teal
+  beam: "#a4632a", // structural member
+  accent: "#b0542f", // terracotta (selection, corner handles)
+} as const;
+
 class Editor {
   model!: BuildingModel;
   issues: Issue[] = [];
@@ -330,7 +342,7 @@ class Editor {
     // Spaces.
     for (const s of model.elementsOfType("space")) {
       const d = s.boundary.map((p) => xy(vp.toScreen(p))).join(" ");
-      parts.push(`<polygon points="${d}" fill="#eef2f6" stroke="none"/>`);
+      parts.push(`<polygon points="${d}" fill="${C.room}" stroke="none"/>`);
     }
 
     // Walls (+ selection + conflict overlay).
@@ -339,9 +351,9 @@ class Editor {
       const b = vp.toScreen(w.baseline[1]);
       const px = Math.max(2, w.thickness * vp.scale);
       if (w.id === this.selectedWall)
-        parts.push(seg(a, b, `stroke="#4c86ff" stroke-width="${px + 8}" stroke-opacity="0.35" stroke-linecap="round"`));
+        parts.push(seg(a, b, `stroke="${C.accent}" stroke-width="${px + 8}" stroke-opacity="0.3" stroke-linecap="round"`));
       parts.push(
-        seg(a, b, `stroke="${w.isLoadBearing ? "#2b3a4a" : "#9aa7b4"}" stroke-width="${px}" stroke-linecap="round"`),
+        seg(a, b, `stroke="${w.isLoadBearing ? C.wall : C.wallLight}" stroke-width="${px}" stroke-linecap="round"`),
       );
       if (conflicted.has(w.id))
         parts.push(seg(a, b, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="${px + 4}" stroke-opacity="0.4" stroke-linecap="round"`));
@@ -360,8 +372,8 @@ class Editor {
       const halfPx = (o.width / 2) * vp.scale;
       const s1: Point = [a[0] + u[0] * (cOff - halfPx), a[1] + u[1] * (cOff - halfPx)];
       const s2: Point = [a[0] + u[0] * (cOff + halfPx), a[1] + u[1] * (cOff + halfPx)];
-      parts.push(seg(s1, s2, `stroke="#ffffff" stroke-width="${px + 1}"`));
-      parts.push(seg(s1, s2, `stroke="${o.kind === "door" ? "#e08a1e" : "#2ca6c4"}" stroke-width="3"`));
+      parts.push(seg(s1, s2, `stroke="${C.gap}" stroke-width="${px + 1}"`));
+      parts.push(seg(s1, s2, `stroke="${o.kind === "door" ? C.door : C.window}" stroke-width="3"`));
       if (conflicted.has(o.id))
         parts.push(seg(s1, s2, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="7" stroke-opacity="0.4"`));
       // Opening-edge handles (windows are the draggable-to-widen case).
@@ -375,7 +387,7 @@ class Editor {
     for (const bm of model.elementsOfType("beam")) {
       const a = vp.toScreen(bm.line[0]);
       const b = vp.toScreen(bm.line[1]);
-      parts.push(seg(a, b, `stroke="#a4632a" stroke-width="2.5" stroke-dasharray="8 5"`));
+      parts.push(seg(a, b, `stroke="${C.beam}" stroke-width="2.5" stroke-dasharray="8 5"`));
       if (conflicted.has(bm.id))
         parts.push(seg(a, b, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="7" stroke-opacity="0.4"`));
     }
@@ -396,9 +408,9 @@ class Editor {
     for (const h of this.handles) {
       const s = vp.toScreen(h.pos);
       if (h.kind === "corner")
-        parts.push(`<circle cx="${x(s)}" cy="${y(s)}" r="6" fill="#fff" stroke="#4c86ff" stroke-width="2"/>`);
+        parts.push(`<circle cx="${x(s)}" cy="${y(s)}" r="6" fill="${C.gap}" stroke="${C.accent}" stroke-width="2"/>`);
       else
-        parts.push(`<rect x="${x(s) - 5}" y="${y(s) - 5}" width="10" height="10" rx="2" fill="#fff" stroke="#e08a1e" stroke-width="2"/>`);
+        parts.push(`<rect x="${x(s) - 5}" y="${y(s) - 5}" width="10" height="10" rx="2" fill="${C.gap}" stroke="${C.door}" stroke-width="2"/>`);
     }
 
     this.svg.innerHTML = parts.join("");
