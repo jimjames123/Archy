@@ -52,12 +52,19 @@ class Editor {
   drag: Drag = null;
 
   private svg = document.createElementNS(SVGNS, "svg");
+  private view3d = document.getElementById("view3d");
+  private padPts: Point[] = [];
+  private pendingTo: Point | null = null;
+  private frame = 0;
+  private dragOps: EditOp[] | null = null; // last preview ops, logged once on release
 
-  constructor(private host: HTMLElement) {
+  constructor(host: HTMLElement) {
     host.appendChild(this.svg);
+    this.svg.style.cursor = "default";
     this.svg.addEventListener("pointerdown", (e) => this.onDown(e));
     this.svg.addEventListener("pointermove", (e) => this.onMove(e));
     this.svg.addEventListener("pointerup", (e) => this.onUp(e));
+    this.svg.addEventListener("pointercancel", (e) => this.onUp(e));
     this.reset();
   }
 
@@ -65,7 +72,9 @@ class Editor {
     this.model = makeRoomPlan().model;
     this.selectedWall = null;
     this.drag = null;
+    this.dragOps = null;
     this.fit();
+    syncToggle(undefined);
     this.revalidate();
   }
 
@@ -73,13 +82,14 @@ class Editor {
     const pts = this.geometryPoints();
     const xs = pts.map((p) => p[0]);
     const ys = pts.map((p) => p[1]);
-    // Pad so a wall can be dragged outward without leaving the viewport.
+    // A fixed padded envelope, computed once, keeps BOTH views from rescaling
+    // as geometry is dragged around inside it.
     const pad = 1200;
-    const padded: Point[] = [
+    this.padPts = [
       [Math.min(...xs) - pad, Math.min(...ys) - pad],
       [Math.max(...xs) + pad, Math.max(...ys) + pad],
     ];
-    this.vp = fitViewport(padded, 520);
+    this.vp = fitViewport(this.padPts, 520);
     this.svg.setAttribute("width", String(this.vp.width));
     this.svg.setAttribute("height", String(this.vp.height));
   }
@@ -100,8 +110,11 @@ class Editor {
 
   /** The 3D view is the same iso renderer from src/, fed the same model. */
   private render3d() {
-    const host = document.getElementById("view3d");
-    if (host) host.innerHTML = renderIsoSVG(this.model, this.issues, { width: 520 });
+    if (this.view3d)
+      this.view3d.innerHTML = renderIsoSVG(this.model, this.issues, {
+        width: 520,
+        padPoints: this.padPts,
+      });
   }
 
   // ---- interaction -------------------------------------------------------
@@ -116,6 +129,8 @@ class Editor {
     const h = this.nearestHandle(p, 12);
     if (h) {
       this.svg.setPointerCapture(e.pointerId);
+      this.svg.style.cursor = "grabbing";
+      this.dragOps = null;
       if (h.kind === "corner") this.drag = { kind: "corner", refs: this.cornerRefs(h.pos) };
       else this.drag = { kind: "open-edge", openingId: h.openingId };
       return;
@@ -128,42 +143,80 @@ class Editor {
   }
 
   private onMove(e: PointerEvent) {
-    if (!this.drag) return;
-    const m = this.vp.toModel(this.pointer(e));
-    if (this.drag.kind === "corner") this.moveCorner(this.drag.refs, m);
-    else this.resizeOpening(this.drag.openingId, m);
+    if (this.drag) {
+      // Coalesce: stash the latest target and repaint at most once per frame.
+      this.pendingTo = this.vp.toModel(this.pointer(e));
+      this.scheduleFrame();
+      return;
+    }
+    // Not dragging: reflect what's under the cursor.
+    const p = this.pointer(e);
+    this.svg.style.cursor = this.nearestHandle(p, 12)
+      ? "grab"
+      : this.nearestWall(p, 8)
+        ? "pointer"
+        : "default";
   }
 
   private onUp(e: PointerEvent) {
-    if (this.drag) this.svg.releasePointerCapture(e.pointerId);
-    this.drag = null;
-  }
-
-  private moveCorner(refs: CornerRef[], to: Point) {
-    const ops: EditOp[] = [];
-    for (const ref of refs) {
-      const el = this.model.getElement(ref.type === "wall" ? ref.id : ref.id);
-      if (!el) continue;
-      if (ref.type === "wall" && el.type === "wall") {
-        const b: [Point, Point] = [el.baseline[0], el.baseline[1]];
-        b[ref.end] = to;
-        ops.push({ op: "updateElement", id: el.id, patch: { baseline: b } as never });
-      } else if (ref.type === "space" && el.type === "space") {
-        const boundary = el.boundary.map((v, i) => (i === ref.index ? to : v));
-        ops.push({ op: "updateElement", id: el.id, patch: { boundary } as never });
-      }
-    }
-    if (ops.length) {
-      this.model.commit(ops);
+    if (this.drag) {
+      this.svg.releasePointerCapture?.(e.pointerId);
+      if (this.frame) cancelAnimationFrame(this.frame);
+      this.frame = 0;
+      if (this.pendingTo) this.applyDrag(this.pendingTo);
+      // Record the whole gesture as a single logged transaction.
+      if (this.dragOps) this.model.commit(this.dragOps, { log: true });
+      this.pendingTo = null;
+      this.dragOps = null;
+      this.drag = null;
+      this.svg.style.cursor = "default";
       this.revalidate();
     }
   }
 
-  private resizeOpening(openingId: string, to: Point) {
+  private scheduleFrame() {
+    if (this.frame) return;
+    this.frame = requestAnimationFrame(() => {
+      this.frame = 0;
+      if (this.pendingTo) this.applyDrag(this.pendingTo);
+      this.revalidate();
+    });
+  }
+
+  /** Apply the current drag to the model as an unlogged preview. */
+  private applyDrag(to: Point) {
+    if (!this.drag) return;
+    const ops =
+      this.drag.kind === "corner"
+        ? this.cornerOps(this.drag.refs, to)
+        : this.openingOps(this.drag.openingId, to);
+    if (ops.length) {
+      this.model.commit(ops, { log: false });
+      this.dragOps = ops;
+    }
+  }
+
+  private cornerOps(refs: CornerRef[], to: Point): EditOp[] {
+    const ops: EditOp[] = [];
+    for (const ref of refs) {
+      const el = this.model.getElement(ref.id);
+      if (ref.type === "wall" && el?.type === "wall") {
+        const b: [Point, Point] = [el.baseline[0], el.baseline[1]];
+        b[ref.end] = to;
+        ops.push({ op: "updateElement", id: el.id, patch: { baseline: b } as never });
+      } else if (ref.type === "space" && el?.type === "space") {
+        const boundary = el.boundary.map((v, i) => (i === ref.index ? to : v));
+        ops.push({ op: "updateElement", id: el.id, patch: { boundary } as never });
+      }
+    }
+    return ops;
+  }
+
+  private openingOps(openingId: string, to: Point): EditOp[] {
     const o = this.model.getElement(openingId);
-    if (o?.type !== "opening") return;
+    if (o?.type !== "opening") return [];
     const wall = this.model.getElement(o.hostWallId);
-    if (wall?.type !== "wall") return;
+    if (wall?.type !== "wall") return [];
     const [a, b] = wall.baseline;
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
     const u: Point = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
@@ -171,8 +224,8 @@ class Editor {
     const half = Math.abs(t - o.offset);
     const maxHalf = Math.min(o.offset, len - o.offset) - 50;
     const width = Math.round(Math.max(200, Math.min(half, Math.max(200, maxHalf))) * 2);
-    this.model.commit([{ op: "updateElement", id: openingId, patch: { width } as never }]);
-    this.revalidate();
+    if (width === o.width) return [];
+    return [{ op: "updateElement", id: openingId, patch: { width } as never }];
   }
 
   private cornerRefs(pos: Point): CornerRef[] {
@@ -312,12 +365,10 @@ class Editor {
       if (conflicted.has(o.id))
         parts.push(seg(s1, s2, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="7" stroke-opacity="0.4"`));
       // Opening-edge handles (windows are the draggable-to-widen case).
-      const cModel = along(wall.baseline[0], wall.baseline[1], o.offset);
       for (const sign of [-1, 1] as const) {
         const edge = along(wall.baseline[0], wall.baseline[1], o.offset + (sign * o.width) / 2);
         this.handles.push({ kind: "open-edge", openingId: o.id, pos: edge });
       }
-      void cModel;
     }
 
     // Beams.

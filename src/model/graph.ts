@@ -76,8 +76,13 @@ export class BuildingModel {
    * TYPES involved (see `changedTypes`), which callers hand to the rules
    * engine. Bumps `version` on every mutated element so downstream consumers
    * can detect staleness.
+   *
+   * `opts.log` (default true) appends to the edit log. Pass `false` for the
+   * intermediate frames of a continuous gesture (e.g. a drag) so the model
+   * stays live for re-validation without flooding the history — commit once,
+   * logged, when the gesture settles.
    */
-  commit(ops: EditOp[]): CommitResult {
+  commit(ops: EditOp[], opts: { log?: boolean } = {}): CommitResult {
     const changed = new Set<Id>();
     // Types are tracked separately so a REMOVED element still triggers the
     // rules that depended on its type — its type is gone from the model by the
@@ -152,7 +157,8 @@ export class BuildingModel {
       }
     }
     const txId = ++this.txCounter;
-    this.log.push({ txId, ops, changed: [...changed], timestamp: Date.now() });
+    if (opts.log !== false)
+      this.log.push({ txId, ops, changed: [...changed], timestamp: Date.now() });
     return { txId, changed, changedTypes };
   }
 

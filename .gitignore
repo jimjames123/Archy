@@ -1,6 +1,7 @@
 node_modules/
-dist/
+/dist/
 demo/
 web/dist/
+docs/preview.png
 *.log
 .DS_Store

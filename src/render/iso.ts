@@ -23,7 +23,7 @@ function project(p: P3): Point {
 export function renderIsoSVG(
   model: BuildingModel,
   issues: Issue[] = [],
-  opts: { width?: number; title?: string } = {},
+  opts: { width?: number; title?: string; padPoints?: Point[] } = {},
 ): string {
   const width = opts.width ?? 900;
   const margin = 56;
@@ -40,6 +40,13 @@ export function renderIsoSVG(
       for (const b of [w.baseline[0], w.baseline[1]]) proj.push(project([b[0], b[1], z]));
   }
   for (const s of spaces) for (const b of s.boundary) proj.push(project([b[0], b[1], 0]));
+  // Optional padding points keep the fit stable across edits: if the caller
+  // passes a fixed envelope, the view doesn't rescale/recenter every frame.
+  if (opts.padPoints) {
+    const maxH = Math.max(2700, ...walls.map((w) => w.height));
+    for (const p of opts.padPoints)
+      for (const z of [0, maxH]) proj.push(project([p[0], p[1], z]));
+  }
 
   const xs = proj.map((p) => p[0]);
   const ys = proj.map((p) => p[1]);

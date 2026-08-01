@@ -110,9 +110,27 @@ transfer beam. The panel and the header conflict count update on every edit —
 widen the window past the lintel span and the structural conflict appears live;
 add a deep beam and the headroom conflict cascades in beneath it.
 
+Polish notes: drags are coalesced to one repaint per animation frame and applied
+as unlogged preview commits, so a gesture stays smooth and lands as a single
+entry in the edit log; both views share one fixed padded envelope so neither
+rescales while you edit; the cursor reflects what's under it (grab / move /
+select).
+
 `node scripts/shoot.mjs` drives the built app in headless Chromium (real pointer
 drags) and captures before/after screenshots — a regression check that the live
 loop works, not just the rules in isolation.
+
+## Deploying to GitHub Pages
+
+The editor is a static site. `npm run build:pages` bundles it into `docs/`
+(`index.html` + minified `dist/bundle.js` + `.nojekyll`), which is committed so
+Pages can serve it directly. `node scripts/verify-pages.mjs` serves `docs/` and
+confirms the minified build renders with no console errors.
+
+To publish: in the repo, **Settings → Pages → Build and deployment → Source:
+"Deploy from a branch"**, pick this branch and the **`/docs`** folder, Save. The
+site comes up at `https://<owner>.github.io/<repo>/` (relative asset paths make
+the project subpath work). Re-run `npm run build:pages` and commit after changes.
 
 ## Key architecture decisions
 

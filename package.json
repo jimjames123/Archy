@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "demo": "tsx src/demo/generate.ts",
     "web:build": "esbuild web/main.ts --bundle --format=esm --sourcemap --outfile=web/dist/bundle.js",
-    "web:dev": "esbuild web/main.ts --bundle --format=esm --outfile=web/dist/bundle.js --servedir=web --serve=8000"
+    "web:dev": "esbuild web/main.ts --bundle --format=esm --outfile=web/dist/bundle.js --servedir=web --serve=8000",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "dependencies": {
     "zod": "^3.23.8"

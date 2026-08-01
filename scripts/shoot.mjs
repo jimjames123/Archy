@@ -62,5 +62,26 @@ await page.waitForTimeout(120);
 await page.screenshot({ path: "web/dist/shot-3-beam.png" });
 console.log("after beam:", await page.textContent("#status"));
 
+// Reset, then drag a corner to reshape the room — exercises the coalesced drag
+// path and confirms both views follow one model without the 3D rescaling.
+await page.click("#reset");
+await page.waitForTimeout(80);
+const corner = await page.evaluate(() => {
+  const ed = window.archy;
+  const svg = document.querySelector("#canvas svg");
+  const r = svg.getBoundingClientRect();
+  const c = ed.handles.filter((h) => h.kind === "corner");
+  const topRight = c.reduce((a, b) => (b.pos[0] - b.pos[1] > a.pos[0] - a.pos[1] ? b : a));
+  const s = ed.vp.toScreen(topRight.pos);
+  return { x: r.left + s[0], y: r.top + s[1] };
+});
+await page.mouse.move(corner.x, corner.y);
+await page.mouse.down();
+await page.mouse.move(corner.x - 90, corner.y + 70, { steps: 16 });
+await page.mouse.up();
+await page.waitForTimeout(120);
+await page.screenshot({ path: "web/dist/shot-4-reshape.png" });
+console.log("after reshape:", await page.textContent("#status"));
+
 await browser.close();
 server.close();
