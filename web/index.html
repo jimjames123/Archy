@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Archy — Datum</title>
+<title>Archy</title>
 <style>
   :root {
     --paper: #f4f1ea;      /* page */
@@ -29,7 +29,6 @@
   .brand { display: flex; align-items: baseline; gap: 10px; }
   .brand .mark { width: 12px; height: 12px; background: var(--accent); border-radius: 2px; align-self: center; transform: rotate(45deg); }
   .brand .word { font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
-  .brand .datum { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); }
   .masthead nav { margin-left: 8px; font-size: 13px; color: var(--ink-2); }
   .masthead .spacer { margin-left: auto; }
   .status { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
@@ -81,7 +80,7 @@
 </head>
 <body>
   <header class="masthead">
-    <div class="brand"><span class="mark"></span><span class="word">Archy</span><span class="datum">Datum</span></div>
+    <div class="brand"><span class="mark"></span><span class="word">Archy</span></div>
     <nav>The coordinated design surface</nav>
     <span class="spacer"></span>
     <span id="status" class="status ok">0 conflicts</span>
@@ -118,7 +117,7 @@
 
   <footer>
     <span>Archy — shared editable building model · Architectural ↔ Structural coordination</span>
-    <span class="mono">datum · v0</span>
+    <span class="mono">archy · v0</span>
   </footer>
 
   <script type="module" src="./dist/bundle.js"></script>

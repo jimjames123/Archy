@@ -43,7 +43,7 @@ type CornerRef =
 const SVGNS = "http://www.w3.org/2000/svg";
 const EPS = 5; // mm tolerance for "same corner"
 
-/** Drawing palette, aligned with the Datum design system in index.html. */
+/** Drawing palette, aligned with the Archy design system in index.html. */
 const C = {
   room: "#efeadd", // warm floor fill
   gap: "#fffefb", // opening cut / handle fill (matches card)
