@@ -7,3 +7,4 @@ export * from "./rules/doorClearance.js";
 export * from "./rules/egress.js";
 export * from "./rules/headroom.js";
 export * from "./geometry/segments.js";
+export * from "./generate/footprint.js";

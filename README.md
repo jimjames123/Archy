@@ -73,6 +73,23 @@ npm test        # 25 tests
 npm run demo    # writes demo/report.html — open it in a browser
 ```
 
+## Generate from site (Phase 4a)
+
+`src/generate/footprint.ts` turns structured site input — land dimensions,
+setbacks, orientation, room count — into a **space-efficient footprint and
+starter room layout, as a real editable `BuildingModel`**, not a picture. The
+footprint fills the buildable envelope (land inset by setbacks); the front wall
+is the street edge; rooms are sliced across it with a front door and interior
+doors so every room has egress. Every element carries `provenance.source =
+"generated"` with confidence < 1, so it reads as a proposal.
+
+The payoff: the generated plan is validated by the *same* rules engine and drops
+into the *same* editor — it comes up coordinated (0 conflicts across 1–6 rooms,
+covered by tests), and you can immediately drag it and watch coordination
+respond. In the live editor, the "Generate from site" bar builds one on demand.
+This proves the core move — generate the model, then render from it — with the
+LLM `text → model` path (Phase 4b) slotting into the same pipeline later.
+
 ## Visualization (Phase 1)
 
 The renderers are pure functions of the model — no browser, no external deps —
@@ -170,8 +187,11 @@ assistance — never a substitute for a licensed engineer's stamped drawings.
 - **Phase 1 — visualization from the model:** 2D plan + 3D extrusion, both
   reading the shared model, with conflict issues surfaced on the drawing.
 - **Phase 2 — interactive editing:** edits write back through transactions.
-- **Phase 4 — generation:** LLM text/sketch → parametric model (constrained to
-  the schema), plus land-dims → footprint/orientation proposer.
+- **Phase 4a — site → footprint generation** ✅ deterministic land-dims +
+  setbacks + orientation → a space-efficient footprint and starter room layout,
+  emitted as a real editable model and validated by the same engine.
+- **Phase 4b — generation:** LLM text/sketch → parametric model (constrained to
+  the schema, server-side since it needs an API key).
 - **Phase 5+ —** electrical & plumbing modules and rules; region rulesets;
   photoreal + walkthrough; image → editable reconstruction (hardest, last).
 

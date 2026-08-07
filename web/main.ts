@@ -18,6 +18,7 @@ import { doorClearanceRule } from "../src/rules/doorClearance.js";
 import { fitViewport, type Viewport } from "../src/render/viewport.js";
 import { SEVERITY_COLOR } from "../src/render/svg.js";
 import { renderIsoSVG } from "../src/render/iso.js";
+import { generateFootprint, type Compass } from "../src/generate/footprint.js";
 import type { Point } from "../src/model/schema.js";
 
 const engine = new RulesEngine()
@@ -81,7 +82,12 @@ class Editor {
   }
 
   reset() {
-    this.model = makeRoomPlan().model;
+    this.load(makeRoomPlan().model);
+  }
+
+  /** Swap in a whole new model (e.g. a generated footprint) and refit. */
+  load(model: BuildingModel) {
+    this.model = model;
     this.selectedWall = null;
     this.drag = null;
     this.dragOps = null;
@@ -485,3 +491,26 @@ const editor = new Editor(document.getElementById("canvas")!);
 document.getElementById("toggle-lb")!.addEventListener("click", () => editor.toggleLoadBearing());
 document.getElementById("add-beam")!.addEventListener("click", () => editor.toggleBeam());
 document.getElementById("reset")!.addEventListener("click", () => editor.reset());
+
+// ---- generate from site --------------------------------------------------
+function num(id: string): number {
+  return parseFloat((document.getElementById(id) as HTMLInputElement).value);
+}
+document.getElementById("generate")!.addEventListener("click", () => {
+  const note = document.getElementById("gen-note")!;
+  try {
+    const set = num("in-set") * 1000;
+    const { model, report } = generateFootprint({
+      land: { width: num("in-w") * 1000, depth: num("in-d") * 1000 },
+      setbacks: { front: set, rear: set, left: set, right: set },
+      rooms: num("in-rooms"),
+      frontFaces: (document.getElementById("in-front") as HTMLSelectElement).value as Compass,
+    });
+    editor.load(model);
+    note.className = "gen-note";
+    note.textContent = `${report.footprint.widthM}×${report.footprint.depthM} m · ${Math.round(report.coverage * 100)}% site coverage · ${report.rooms.length} rooms — generated proposal, fully editable.`;
+  } catch (e) {
+    note.className = "gen-note error";
+    note.textContent = (e as Error).message;
+  }
+});
