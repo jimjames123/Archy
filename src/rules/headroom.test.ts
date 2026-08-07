@@ -56,7 +56,7 @@ describe("headroom", () => {
     const conflict = issues.find((i) => i.ruleId === HEADROOM);
     expect(conflict).toBeDefined();
     expect(conflict!.elements).toEqual(["beam-mid", ids.room]);
-    expect(conflict!.message).toMatch(/1800 mm clear/);
+    expect(conflict!.message).toMatch(/clear beneath it/);
   });
 
   it("a shallow beam over the same room is fine", () => {

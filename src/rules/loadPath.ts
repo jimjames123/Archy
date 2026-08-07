@@ -17,6 +17,7 @@
  * user has acknowledged a member is required there — it is not a claim the
  * member is sufficient.
  */
+import { ft } from "../units.js";
 import type { BuildingModel, Id } from "../model/graph.js";
 import type { Opening } from "../model/schema.js";
 import type { Issue, Rule } from "./engine.js";
@@ -68,8 +69,8 @@ export function loadPathRule(config: Partial<LoadPathConfig> = {}): Rule {
 
 function openingSpanMessage(opening: Opening, cfg: LoadPathConfig): string {
   return (
-    `${cap(opening.kind)} "${opening.id}" (${opening.width} mm wide) sits in a ` +
-    `load-bearing wall and exceeds the assumed ${cfg.maxAssumedLintelSpan} mm ` +
+    `${cap(opening.kind)} "${opening.id}" (${ft(opening.width)} wide) sits in a ` +
+    `load-bearing wall and exceeds the assumed ${ft(cfg.maxAssumedLintelSpan)} ` +
     `lintel span, with no beam modelled over it. Add a beam and have its size ` +
     `confirmed by an engineer — the platform flags this, it does not size it.`
   );

@@ -8,6 +8,7 @@
  * Like every rule here this is design assistance against a configurable
  * baseline, not a certified code review.
  */
+import { ft } from "../units.js";
 import type { BuildingModel, Id } from "../model/graph.js";
 import type { Issue, Rule } from "./engine.js";
 
@@ -35,8 +36,8 @@ export function doorClearanceRule(config: Partial<DoorClearanceConfig> = {}): Ru
           severity: "warn",
           elements: [opening.id],
           message:
-            `Door "${opening.id}" is ${opening.width} mm wide, below the ` +
-            `configured ${cfg.minDoorWidth} mm minimum clear width.`,
+            `Door "${opening.id}" is ${ft(opening.width)} wide, below the ` +
+            `configured ${ft(cfg.minDoorWidth)} minimum clear width.`,
         });
       }
       return issues;

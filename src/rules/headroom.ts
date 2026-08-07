@@ -18,6 +18,7 @@
  * and the beam contribution assumes the soffit hangs its full depth below the
  * ceiling. It is design assistance against a baseline, not a certified check.
  */
+import { ft } from "../units.js";
 import type { BuildingModel, Id } from "../model/graph.js";
 import { segmentIntersectsPolygon, type Segment } from "../geometry/segments.js";
 import type { Issue, Rule } from "./engine.js";
@@ -67,8 +68,8 @@ export function headroomRule(config: Partial<HeadroomConfig> = {}): Rule {
             elements: [space.id, storey.id],
             message:
               `Habitable space "${space.id}" has a clear ceiling height of ` +
-              `${clear} mm (assuming ${cfg.assumedFloorCeilingBuildup} mm ` +
-              `floor/ceiling build-up), below the ${cfg.minCeilingHeight} mm ` +
+              `${ft(clear)} (assuming ${ft(cfg.assumedFloorCeilingBuildup)} ` +
+              `floor/ceiling build-up), below the ${ft(cfg.minCeilingHeight)} ` +
               `minimum. Increase the storey height.`,
           });
           continue; // room is already too short; beam check is moot
@@ -85,9 +86,9 @@ export function headroomRule(config: Partial<HeadroomConfig> = {}): Rule {
             severity: "conflict",
             elements: [beam.id, space.id],
             message:
-              `Beam "${beam.id}" (${beam.depth} mm deep) runs over habitable ` +
-              `space "${space.id}", leaving ${under} mm clear beneath it — ` +
-              `below the ${cfg.minHeadroomUnderBeam} mm minimum. Use a shallower ` +
+              `Beam "${beam.id}" (${ft(beam.depth)} deep) runs over habitable ` +
+              `space "${space.id}", leaving ${ft(under)} clear beneath it — ` +
+              `below the ${ft(cfg.minHeadroomUnderBeam)} minimum. Use a shallower ` +
               `member, raise the storey, or reroute the beam.`,
           });
         }

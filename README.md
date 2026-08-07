@@ -20,6 +20,7 @@ Coordination checks proven so far:
 | `load-path.opening-span` | Structural | An opening in a load-bearing wall exceeds the assumed lintel span with no beam modelled |
 | `load-path.support-beneath` | Structural | An upper-storey load-bearing wall has no wall/beam beneath it (e.g. the wall downstairs was removed) |
 | `egress.habitable-door` | Architectural | A habitable space has no adequate door out, reasoning over the `bounds`/`hostedBy` graph edges |
+| `layout.room-overlap` | Architectural | Two rooms overlap instead of sitting flush/apart — the space-planner's live check |
 | `headroom.clear-height` | Architectural ← Structural | A storey is too short, or a **beam's depth** eats the clear height of a habitable room beneath it |
 | `door-clearance.min-width` | Architectural | A door is narrower than the configured minimum |
 
@@ -120,12 +121,12 @@ the same model** — the isometric renderer from `src/render/iso.ts` re-runs on
 every edit, so a conflict (e.g. a widened opening in a load-bearing wall) tints
 that wall red in both views at once.
 
-Interactions: drag a corner (○) to reshape the room (coincident wall + space
-vertices move together so it stays watertight); drag a window edge (▫) to widen
-the opening; click a wall to select it and toggle its load-bearing state; add a
-transfer beam. The panel and the header conflict count update on every edit —
-widen the window past the lintel span and the structural conflict appears live;
-add a deep beam and the headroom conflict cascades in beneath it.
+Interactions (space-planner): **drag a room to move it; drop it flush against
+another to attach them** (edges snap within a threshold); drag a corner (○) to
+resize; drag a window edge (▫) to widen it. Each change rebuilds a real model
+(`buildRoomModel`) and re-runs the engine, so overlap one room on another and the
+`room-overlap` conflict fires; slide it back flush and it clears; widen a window
+past the lintel span and the structural conflict appears — all live, in feet.
 
 Polish notes: drags are coalesced to one repaint per animation frame and applied
 as unlogged preview commits, so a gesture stays smooth and lands as a single

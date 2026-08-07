@@ -11,6 +11,7 @@
  * not a full means-of-egress / travel-distance code analysis. It is design
  * assistance against a configurable baseline, clearly not a code review.
  */
+import { ft } from "../units.js";
 import type { BuildingModel, Id } from "../model/graph.js";
 import type { Issue, Rule } from "./engine.js";
 
@@ -64,7 +65,7 @@ export function egressRule(config: Partial<EgressConfig> = {}): Rule {
           elements: [space.id],
           message:
             `Habitable space "${space.id}" (${space.program}) has no egress ` +
-            `door of at least ${cfg.minEgressWidth} mm in any of its bounding ` +
+            `door of at least ${ft(cfg.minEgressWidth)} in any of its bounding ` +
             `walls. Add a door to a bounding wall.`,
         });
       }
