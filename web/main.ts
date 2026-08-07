@@ -345,10 +345,10 @@ class Editor {
     const parts: string[] = [];
     this.handles = [];
 
-    // Spaces.
+    // Spaces (tinted per program so adjacent rooms read as different rooms).
     for (const s of model.elementsOfType("space")) {
       const d = s.boundary.map((p) => xy(vp.toScreen(p))).join(" ");
-      parts.push(`<polygon points="${d}" fill="${C.room}" stroke="none"/>`);
+      parts.push(`<polygon points="${d}" fill="${roomTint(s.program)}" stroke="none"/>`);
     }
 
     // Walls (+ selection + conflict overlay).
@@ -378,8 +378,23 @@ class Editor {
       const halfPx = (o.width / 2) * vp.scale;
       const s1: Point = [a[0] + u[0] * (cOff - halfPx), a[1] + u[1] * (cOff - halfPx)];
       const s2: Point = [a[0] + u[0] * (cOff + halfPx), a[1] + u[1] * (cOff + halfPx)];
-      parts.push(seg(s1, s2, `stroke="${C.gap}" stroke-width="${px + 1}"`));
-      parts.push(seg(s1, s2, `stroke="${o.kind === "door" ? C.door : C.window}" stroke-width="3"`));
+      parts.push(seg(s1, s2, `stroke="${C.gap}" stroke-width="${px + 1}"`)); // cut the wall
+      if (o.kind === "door") {
+        // Draw a hinge + leaf + swing arc so a door reads as a door.
+        const n: Point = [-u[1], u[0]];
+        const wpx = o.width * vp.scale;
+        const hinge = s1;
+        const leaf: Point = [hinge[0] + n[0] * wpx, hinge[1] + n[1] * wpx];
+        const closed: Point = [hinge[0] + u[0] * wpx, hinge[1] + u[1] * wpx];
+        const sw = u[0] * n[1] - u[1] * n[0] > 0 ? 1 : 0;
+        parts.push(seg(s1, s2, `stroke="${C.door}" stroke-width="3"`));
+        parts.push(seg(hinge, leaf, `stroke="${C.door}" stroke-width="1.5"`));
+        parts.push(
+          `<path d="M ${x(closed)} ${y(closed)} A ${wpx.toFixed(1)} ${wpx.toFixed(1)} 0 0 ${sw} ${x(leaf)} ${y(leaf)}" fill="none" stroke="${C.door}" stroke-width="1" stroke-dasharray="3 3"/>`,
+        );
+      } else {
+        parts.push(seg(s1, s2, `stroke="${C.window}" stroke-width="3"`));
+      }
       if (conflicted.has(o.id))
         parts.push(seg(s1, s2, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="7" stroke-opacity="0.4"`));
       // Opening-edge handles (windows are the draggable-to-widen case).
@@ -396,6 +411,28 @@ class Editor {
       parts.push(seg(a, b, `stroke="${C.beam}" stroke-width="2.5" stroke-dasharray="8 5"`));
       if (conflicted.has(bm.id))
         parts.push(seg(a, b, `stroke="${SEVERITY_COLOR.conflict}" stroke-width="7" stroke-opacity="0.4"`));
+    }
+
+    // Room labels — name + area, sat high in the room so they clear the doors.
+    // Duplicate programs get numbered (Bedroom 1 / Bedroom 2) so rooms are distinct.
+    const spaces = model.elementsOfType("space");
+    const totals = new Map<string, number>();
+    for (const s of spaces) totals.set(s.program, (totals.get(s.program) ?? 0) + 1);
+    const seenProg = new Map<string, number>();
+    for (const s of spaces) {
+      const scr = s.boundary.map((p) => vp.toScreen(p));
+      const cx = scr.reduce((a, p) => a + p[0], 0) / scr.length;
+      const ys = scr.map((p) => p[1]);
+      const labelY = Math.min(...ys) + 0.26 * (Math.max(...ys) - Math.min(...ys));
+      const nth = (seenProg.set(s.program, (seenProg.get(s.program) ?? 0) + 1), seenProg.get(s.program)!);
+      const name = totals.get(s.program)! > 1 ? `${cap(s.program)} ${nth}` : cap(s.program);
+      const areaM2 = (polyArea(s.boundary) / 1e6).toFixed(1);
+      parts.push(
+        svgText([cx, labelY], name, `fill="#57544d" font-size="13" font-weight="600" text-anchor="middle"`),
+      );
+      parts.push(
+        svgText([cx, labelY + 15], `${areaM2} m²`, `fill="#8b877c" font-size="11" text-anchor="middle"`),
+      );
     }
 
     // Corner handles (unique wall endpoints).
@@ -444,9 +481,35 @@ function distToSeg(p: Point, a: Point, b: Point): number {
 function seg(a: Point, b: Point, attrs: string): string {
   return `<line x1="${x(a)}" y1="${y(a)}" x2="${x(b)}" y2="${y(b)}" ${attrs}/>`;
 }
+function svgText(p: Point, s: string, attrs: string): string {
+  return `<text x="${x(p)}" y="${y(p)}" ${attrs}>${escapeHtml(s)}</text>`;
+}
 const x = (p: Point) => Math.round(p[0] * 100) / 100;
 const y = (p: Point) => Math.round(p[1] * 100) / 100;
 const xy = (p: Point) => `${x(p)},${y(p)}`;
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function polyArea(pts: Point[]): number {
+  let a = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    a += (pts[j]![0] + pts[i]![0]) * (pts[j]![1] - pts[i]![1]);
+  }
+  return Math.abs(a / 2);
+}
+/** Subtle warm tint per program so neighbouring rooms are distinguishable. */
+function roomTint(program: string): string {
+  const tints: Record<string, string> = {
+    living: "#efeadd",
+    kitchen: "#e8e6d3",
+    bedroom: "#f1eadf",
+    dining: "#ebe4d2",
+    study: "#e9e8dc",
+    bathroom: "#e6ebe4",
+  };
+  return tints[program] ?? "#efeadd";
+}
 
 // ---- DOM glue ------------------------------------------------------------
 
