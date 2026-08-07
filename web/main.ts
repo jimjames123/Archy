@@ -43,6 +43,7 @@ type CornerRef =
 
 const SVGNS = "http://www.w3.org/2000/svg";
 const EPS = 5; // mm tolerance for "same corner"
+const MM_PER_FT = 304.8; // model is mm internally; the UI shows feet
 
 /** Drawing palette, aligned with the Archy design system in index.html. */
 const C = {
@@ -426,12 +427,12 @@ class Editor {
       const labelY = Math.min(...ys) + 0.26 * (Math.max(...ys) - Math.min(...ys));
       const nth = (seenProg.set(s.program, (seenProg.get(s.program) ?? 0) + 1), seenProg.get(s.program)!);
       const name = totals.get(s.program)! > 1 ? `${cap(s.program)} ${nth}` : cap(s.program);
-      const areaM2 = (polyArea(s.boundary) / 1e6).toFixed(1);
+      const areaFt2 = Math.round(polyArea(s.boundary) / (MM_PER_FT * MM_PER_FT));
       parts.push(
         svgText([cx, labelY], name, `fill="#57544d" font-size="13" font-weight="600" text-anchor="middle"`),
       );
       parts.push(
-        svgText([cx, labelY + 15], `${areaM2} m²`, `fill="#8b877c" font-size="11" text-anchor="middle"`),
+        svgText([cx, labelY + 15], `${areaFt2} ft²`, `fill="#8b877c" font-size="11" text-anchor="middle"`),
       );
     }
 
@@ -562,16 +563,18 @@ function num(id: string): number {
 document.getElementById("generate")!.addEventListener("click", () => {
   const note = document.getElementById("gen-note")!;
   try {
-    const set = num("in-set") * 1000;
+    const set = num("in-set") * MM_PER_FT;
     const { model, report } = generateFootprint({
-      land: { width: num("in-w") * 1000, depth: num("in-d") * 1000 },
+      land: { width: num("in-w") * MM_PER_FT, depth: num("in-d") * MM_PER_FT },
       setbacks: { front: set, rear: set, left: set, right: set },
       rooms: num("in-rooms"),
       frontFaces: (document.getElementById("in-front") as HTMLSelectElement).value as Compass,
     });
     editor.load(model);
     note.className = "gen-note";
-    note.textContent = `${report.footprint.widthM}×${report.footprint.depthM} m · ${Math.round(report.coverage * 100)}% site coverage · ${report.rooms.length} rooms — generated proposal, fully editable.`;
+    const wFt = Math.round(report.footprint.widthM * 3.28084);
+    const dFt = Math.round(report.footprint.depthM * 3.28084);
+    note.textContent = `${wFt}×${dFt} ft · ${Math.round(report.coverage * 100)}% site coverage · ${report.rooms.length} rooms — generated proposal, fully editable.`;
   } catch (e) {
     note.className = "gen-note error";
     note.textContent = (e as Error).message;

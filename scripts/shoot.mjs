@@ -83,9 +83,9 @@ await page.waitForTimeout(120);
 await page.screenshot({ path: "web/dist/shot-4-reshape.png" });
 console.log("after reshape:", await page.textContent("#status"));
 
-// Generate a footprint from site inputs (14 x 10 m, 1.5 m setback, 4 rooms).
-await page.fill("#in-w", "14");
-await page.fill("#in-d", "10");
+// Generate a footprint from site inputs (44 x 32 ft, 5 ft setback, 4 rooms).
+await page.fill("#in-w", "44");
+await page.fill("#in-d", "32");
 await page.fill("#in-rooms", "4");
 await page.click("#generate");
 await page.waitForTimeout(150);
